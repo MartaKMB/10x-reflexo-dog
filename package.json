@@ -4,9 +4,11 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "seed": "tsx src/db/seed.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."
@@ -23,6 +25,7 @@
     "astro": "5.5.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^16.5.0",
     "lucide-react": "^0.487.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -48,6 +51,7 @@
     "husky": "9.1.7",
     "lint-staged": "15.5.0",
     "prettier-plugin-astro": "0.14.1",
+    "tsx": "^4.19.4",
     "typescript-eslint": "8.28.0"
   },
   "lint-staged": {
