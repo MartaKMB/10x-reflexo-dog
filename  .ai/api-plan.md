@@ -4,43 +4,38 @@
 
 ### Users
 - Table: `users`
-- Endpoints: `/api/users`
+- Core user management and authentication
 
 ### Dog Profiles
 - Table: `dog_profiles`
-- Endpoints: `/api/dog-profiles`
+- Dog information and medical history
 
 ### Reflexology Points
 - Table: `reflexology_points`
-- Endpoints: `/api/reflexology-points`
+- Reference data for treatment points
 
-### Predefined Schemas
-- Table: `predefined_schemas`
-- Endpoints: `/api/predefined-schemas`
-
-### User Schemas
-- Table: `user_schemas`
-- Endpoints: `/api/user-schemas`
+### Treatment Schemas
+- Tables: `predefined_schemas`, `user_schemas`
+- Treatment templates and custom schemas
 
 ### Treatment Sessions
-- Table: `treatment_sessions`
-- Endpoints: `/api/treatment-sessions`
-
-### Session Points
-- Table: `session_points`
-- Endpoints: `/api/session-points`
+- Tables: `treatment_sessions`, `session_points`
+- Session records and point-specific data
 
 ### User Activity
 - Table: `user_activity`
-- Endpoints: `/api/user-activity`
+- User engagement tracking
 
 ## 2. Endpoints
 
 ### Dog Profiles
 
-#### GET /api/dog-profiles
-- Description: List all dog profiles for authenticated user
-- Response (200):
+#### GET /api/v1/dogs
+- Description: List user's dog profiles
+- Query Parameters:
+  - page: number
+  - limit: number
+- Response: 200 OK
 ```json
 {
   "data": [
@@ -53,12 +48,17 @@
       "allergies": "string[]",
       "medical_history": "string[]"
     }
-  ]
+  ],
+  "meta": {
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  }
 }
 ```
 
-#### POST /api/dog-profiles
-- Description: Create a new dog profile
+#### POST /api/v1/dogs
+- Description: Create new dog profile
 - Request Body:
 ```json
 {
@@ -70,7 +70,7 @@
   "medical_history": "string[]"
 }
 ```
-- Response (201):
+- Response: 201 Created
 ```json
 {
   "id": "uuid",
@@ -79,18 +79,21 @@
   "age": "number",
   "weight": "number",
   "allergies": "string[]",
-  "medical_history": "string[]"
+  "medical_history": "string[]",
+  "created_at": "timestamp"
 }
 ```
 
 ### Reflexology Points
 
-#### GET /api/reflexology-points
-- Description: Get reflexology points with optional filtering
+#### GET /api/v1/points
+- Description: List reflexology points
 - Query Parameters:
-  - `system`: Filter by anatomical system
-  - `search`: Search by name or description
-- Response (200):
+  - layer: string (musculoskeletal|digestive|nervous)
+  - system: string
+  - page: number
+  - limit: number
+- Response: 200 OK
 ```json
 {
   "data": [
@@ -102,14 +105,86 @@
       "coordinates": "object",
       "contraindications": "string[]"
     }
+  ],
+  "meta": {
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  }
+}
+```
+
+### Treatment Schemas
+
+#### GET /api/v1/schemas
+- Description: List user's custom schemas
+- Query Parameters:
+  - page: number
+  - limit: number
+- Response: 200 OK
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "description": "string",
+      "points": "object[]",
+      "created_at": "timestamp"
+    }
+  ],
+  "meta": {
+    "total": "number",
+    "page": "number",
+    "limit": "number"
+  }
+}
+```
+
+#### POST /api/v1/schemas
+- Description: Create custom treatment schema
+- Request Body:
+```json
+{
+  "name": "string",
+  "description": "string",
+  "points": "object[]"
+}
+```
+- Response: 201 Created
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "description": "string",
+  "points": "object[]",
+  "created_at": "timestamp"
+}
+```
+
+#### GET /api/v1/schemas/suggestions
+- Description: Get suggested treatment schemas
+- Query Parameters:
+  - dog_id: uuid
+- Response: 200 OK
+```json
+{
+  "suggestions": [
+    {
+      "id": "uuid",
+      "name": "string",
+      "description": "string",
+      "points": "object[]",
+      "confidence": "number"
+    }
   ]
 }
 ```
 
 ### Treatment Sessions
 
-#### POST /api/treatment-sessions
-- Description: Create a new treatment session
+#### POST /api/v1/sessions
+- Description: Create new treatment session
 - Request Body:
 ```json
 {
@@ -121,73 +196,32 @@
       "reaction_rating": "number",
       "notes": "string"
     }
-  ],
-  "notes": "string"
+  ]
 }
 ```
-- Response (201):
+- Response: 201 Created
 ```json
 {
   "id": "uuid",
   "dog_profile_id": "uuid",
   "user_schema_id": "uuid",
   "start_time": "timestamp",
-  "end_time": "timestamp",
-  "is_completed": "boolean",
-  "notes": "string"
-}
-```
-
-### User Schemas
-
-#### GET /api/user-schemas
-- Description: List user's custom schemas
-- Response (200):
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "string",
-      "description": "string",
-      "points": "object"
-    }
-  ]
-}
-```
-
-#### POST /api/user-schemas
-- Description: Create a new custom schema
-- Request Body:
-```json
-{
-  "name": "string",
-  "description": "string",
-  "points": "object"
-}
-```
-- Response (201):
-```json
-{
-  "id": "uuid",
-  "name": "string",
-  "description": "string",
-  "points": "object"
+  "points": "object[]",
+  "created_at": "timestamp"
 }
 ```
 
 ## 3. Authentication and Authorization
 
 ### Authentication
-- JWT-based authentication
+- JWT-based authentication using Supabase Auth
 - Token expiration: 25 minutes
-- 2FA required for accounts with >5 schemas
-- Token refresh mechanism
+- Refresh token mechanism for extended sessions
 
 ### Authorization
-- Row Level Security (RLS) policies enforced at database level
+- Row Level Security (RLS) policies implemented in database
 - User can only access their own data
-- Role-based access control for admin functions
+- 2FA required for accounts with >5 saved schemas
 
 ## 4. Validation and Business Logic
 
@@ -202,33 +236,28 @@
 #### Treatment Sessions
 - Reaction rating: 1-5
 - Required fields: dog_profile_id, points
-- Points must exist in reflexology_points table
+- Points must be valid reflexology points
 
-#### User Schemas
-- Maximum 3 schemas per user
+#### Schemas
+- Maximum 3 custom schemas per user
 - Points must be valid reflexology points
 - Schema name must be unique per user
 
 ### Business Logic Implementation
 
 #### Schema Generation
-- Endpoint: POST /api/user-schemas/generate
-- Uses historical treatment data
-- Considers dog's medical history
-- Suggests points based on anatomical systems
+- Algorithm considers:
+  - Dog's medical history
+  - Previous session reactions
+  - Anatomical system focus
+  - Contraindications
 
-#### Treatment Session Tracking
-- Automatically tags sessions by anatomical systems
-- Tracks user activity
-- Generates treatment history reports
+#### Session Tracking
+- Automatic tagging by anatomical system
+- Progress tracking over time
 
-#### Data Encryption
-- Medical data encrypted using AES-256
-- Encryption keys managed by Supabase
-- Secure transmission using HTTPS
-
-### Error Handling
-- Standard HTTP status codes
-- Detailed error messages
-- Validation error responses include field-level details
-- Rate limiting responses include retry-after header 
+#### Security Measures
+- AES-256 encryption for medical data
+- Rate limiting: 100 requests per minute
+- Input sanitization for all endpoints
+- CORS configuration for specific origins 
